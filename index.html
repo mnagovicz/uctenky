@@ -898,7 +898,7 @@ function compressImage(dataUrl, callback) {
   var img = new Image();
   img.onload = function() {
     var canvas = document.createElement("canvas");
-    var maxSize = 1200;
+    var maxSize = 600;
     var w = img.width;
     var h = img.height;
 
@@ -915,7 +915,15 @@ function compressImage(dataUrl, callback) {
     canvas.width = w;
     canvas.height = h;
     canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-    callback(canvas.toDataURL("image/jpeg", 0.75));
+
+    // Postupně snižuj kvalitu dokud nebude pod 30KB (EmailJS limit 50KB)
+    var quality = 0.5;
+    var result = canvas.toDataURL("image/jpeg", quality);
+    while (result.length > 40000 && quality > 0.1) {
+      quality -= 0.1;
+      result = canvas.toDataURL("image/jpeg", quality);
+    }
+    callback(result);
   };
   img.src = dataUrl;
 }
