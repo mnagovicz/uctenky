@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Účtenka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f5f5f7;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #6e6e80;
+  --accent: #0066ff;
+  --accent-hover: #0052cc;
+  --border: #e5e5ea;
+  --input-bg: #f0f0f5;
+  --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  --danger: #ff3b30;
+  --success: #34c759;
+  --radius: 16px;
+  --radius-sm: 12px;
+}
+
+[data-theme="dark"] {
+  --bg: #0d0d1a;
+  --card-bg: #1a1a2e;
+  --text: #f0f0f5;
+  --text-secondary: #8e8ea0;
+  --accent: #3388ff;
+  --accent-hover: #5599ff;
+  --border: #2a2a3e;
+  --input-bg: #16162b;
+  --shadow: 0 2px 16px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  transition: background 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+  transition: background 0.3s;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+
+.theme-toggle:active {
+  transform: scale(0.92);
+}
+
+/* Logout button */
+.btn-logout {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.btn-logout:active {
+  background: var(--input-bg);
+}
+
+/* Card */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* Screens */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Login screen */
+.login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80dvh;
+  text-align: center;
+}
+
+.login-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--accent), #0044cc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0,102,255,0.25);
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+/* PIN input */
+.pin-container {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.pin-digit {
+  width: 56px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+.pin-digit::-webkit-inner-spin-button,
+.pin-digit::-webkit-outer-spin-button {
+  display: none;
+}
+
+.pin-digit:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,102,255,0.15);
+}
+
+.pin-error {
+  color: var(--danger);
+  font-size: 14px;
+  min-height: 20px;
+  margin-bottom: 8px;
+}
+
+/* User greeting on login */
+.pin-user-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--success);
+  min-height: 22px;
+  margin-bottom: 12px;
+  transition: opacity 0.2s;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: -0.2px;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+/* Main screen */
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #0044cc);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.user-email {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Photo capture */
+.photo-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-area:active {
+  border-color: var(--accent);
+  background: rgba(0,102,255,0.03);
+}
+
+.photo-area.has-photo {
+  padding: 0;
+  border-style: solid;
+  border-color: var(--success);
+}
+
+.photo-area .photo-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.photo-area .photo-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.photo-area .photo-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.photo-preview {
+  width: 100%;
+  display: block;
+  border-radius: 10px;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.photo-area.has-photo .photo-remove {
+  display: flex;
+}
+
+#photoInput {
+  display: none;
+}
+
+/* Form fields */
+.field {
+  margin-bottom: 16px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.field-select, .field-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236e6e80' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+[data-theme="dark"] .field-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238e8ea0' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.field-select:focus, .field-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,102,255,0.15);
+}
+
+.field-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* Sending state */
+.btn-sending {
+  position: relative;
+}
+
+.btn-sending .btn-text {
+  visibility: hidden;
+}
+
+.btn-sending::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  top: 50%;
+  left: 50%;
+  margin-top: -11px;
+  margin-left: -11px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success screen */
+.success-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70dvh;
+  text-align: center;
+}
+
+.success-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34c759, #28a745);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(52,199,89,0.3);
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.success-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.success-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--danger);
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1000;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 8px 24px rgba(255,59,48,0.3);
+  max-width: calc(100% - 40px);
+  text-align: center;
+}
+
+.toast.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Section divider */
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 24px 0 12px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 360px) {
+  .pin-digit {
+    width: 48px;
+    height: 56px;
+    font-size: 20px;
+  }
+  .pin-container {
+    gap: 8px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">Účtenka</div>
+    <div class="header-right">
+      <button class="btn-logout" id="logoutBtn" style="display:none" onclick="logout()">Odhlásit</button>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Přepnout motiv">
+        <span id="themeIcon">&#9790;</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Screen 1: Login -->
+  <div class="screen active" id="loginScreen">
+    <div class="login-screen">
+      <div class="login-icon">&#128203;</div>
+      <div class="login-title">Účtenka</div>
+      <div class="login-subtitle">Zadejte svůj 4místný PIN</div>
+      <div class="pin-user-name" id="pinUserName">&nbsp;</div>
+      <div class="pin-container">
+        <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-index="0" autocomplete="off">
+        <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-index="1" autocomplete="off">
+        <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-index="2" autocomplete="off">
+        <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-index="3" autocomplete="off">
+      </div>
+      <div class="pin-error" id="pinError">&nbsp;</div>
+      <button class="btn btn-primary" id="loginBtn" onclick="login()" disabled>Přihlásit se</button>
+    </div>
+  </div>
+
+  <!-- Screen 2: Main -->
+  <div class="screen" id="mainScreen">
+    <div class="user-bar">
+      <div class="user-avatar" id="userAvatar"></div>
+      <div class="user-info">
+        <div class="user-name" id="userName"></div>
+        <div class="user-email" id="userEmail"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Fotka účtenky</div>
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div class="photo-area" id="photoArea" onclick="document.getElementById('photoInput').click()">
+        <button class="photo-remove" onclick="removePhoto(event)" aria-label="Odstranit fotku">&times;</button>
+        <div id="photoPlaceholder">
+          <div class="photo-icon">&#128247;</div>
+          <div class="photo-label">Klepněte pro vyfocení</div>
+          <div class="photo-hint">nebo vyberte z galerie</div>
+        </div>
+        <img class="photo-preview" id="photoPreview" style="display:none" alt="Náhled účtenky">
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+    </div>
+
+    <div class="section-title">Údaje</div>
+    <div class="card">
+      <div class="field">
+        <label class="field-label" for="orderSelect">Zakázka</label>
+        <select class="field-select" id="orderSelect">
+          <option value="">Vyberte zakázku...</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom: 0;">
+        <label class="field-label" for="noteInput">Poznámka (volitelné)</label>
+        <input class="field-input" id="noteInput" type="text" placeholder="Např. materiál, doprava...">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="sendBtn" onclick="sendReceipt()">
+      <span class="btn-text">Odeslat účtenku</span>
+    </button>
+  </div>
+
+  <!-- Screen 3: Success -->
+  <div class="screen" id="successScreen">
+    <div class="success-screen">
+      <div class="success-icon">&#10004;</div>
+      <div class="success-title">Odesláno!</div>
+      <div class="success-subtitle" id="successMessage">E-mail byl odeslán na fakturace@isprodukce.cz a na váš e-mail.</div>
+      <button class="btn btn-primary" onclick="resetForm()" style="margin-bottom: 12px;">Odeslat další účtenku</button>
+      <button class="btn btn-secondary" onclick="showScreen('loginScreen'); logout();">Odhlásit se</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// KONFIGURACE – Upravte podle potřeby
+// ============================================================
+
+// EmailJS – po registraci na emailjs.com vyplňte:
+var EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";       // Public Key z EmailJS dashboard
+var EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";       // ID propojené e-mailové služby
+var EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID";     // ID e-mailové šablony
+
+// Seznam uživatelů
+var USERS = [
+  { name: "Jan Novák",     email: "jan@firma.cz",   pin: "1234" },
+  { name: "Petr Svoboda",  email: "petr@firma.cz",  pin: "5678" }
+];
+
+// Seznam zakázek
+var ORDERS = [
+  { id: "ZAK-001", name: "Rekonstrukce kuchyně - Novák" },
+  { id: "ZAK-002", name: "Oprava střechy - Dvořák" }
+];
+
+// E-mail fakturace
+var BILLING_EMAIL = "fakturace@isprodukce.cz";
+
+// ============================================================
+// STAV APLIKACE
+// ============================================================
+var currentUser = null;
+var photoBase64 = null;
+
+// ============================================================
+// INICIALIZACE
+// ============================================================
+(function init() {
+  // Theme
+  var savedTheme = localStorage.getItem("uctenka-theme") || "light";
+  applyTheme(savedTheme);
+
+  // Populate orders dropdown
+  var select = document.getElementById("orderSelect");
+  ORDERS.forEach(function(order) {
+    var opt = document.createElement("option");
+    opt.value = order.id;
+    opt.textContent = order.id + " – " + order.name;
+    select.appendChild(opt);
+  });
+
+  // PIN input handling
+  setupPinInputs();
+
+  // Auto-login
+  var savedPin = localStorage.getItem("uctenka-pin");
+  if (savedPin) {
+    var user = USERS.find(function(u) { return u.pin === savedPin; });
+    if (user) {
+      currentUser = user;
+      showMainScreen();
+      return;
+    } else {
+      localStorage.removeItem("uctenka-pin");
+    }
+  }
+
+  showScreen("loginScreen");
+
+  // EmailJS init
+  if (typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }
+})();
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme() {
+  var current = document.documentElement.getAttribute("data-theme");
+  var next = current === "dark" ? "light" : "dark";
+  applyTheme(next);
+  localStorage.setItem("uctenka-theme", next);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  document.getElementById("themeIcon").innerHTML = theme === "dark" ? "&#9788;" : "&#9790;";
+}
+
+// ============================================================
+// PIN HANDLING
+// ============================================================
+function setupPinInputs() {
+  var digits = document.querySelectorAll(".pin-digit");
+
+  digits.forEach(function(input, i) {
+    input.addEventListener("input", function(e) {
+      var val = this.value.replace(/\D/g, "");
+      this.value = val.slice(0, 1);
+
+      if (val && i < 3) {
+        digits[i + 1].focus();
+      }
+
+      checkPin();
+    });
+
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Backspace" && !this.value && i > 0) {
+        digits[i - 1].focus();
+        digits[i - 1].value = "";
+        checkPin();
+      }
+    });
+
+    input.addEventListener("focus", function() {
+      this.select();
+    });
+
+    // Handle paste
+    input.addEventListener("paste", function(e) {
+      e.preventDefault();
+      var pasted = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 4);
+      for (var j = 0; j < pasted.length && j < 4; j++) {
+        digits[j].value = pasted[j];
+      }
+      if (pasted.length > 0) {
+        digits[Math.min(pasted.length, 3)].focus();
+      }
+      checkPin();
+    });
+  });
+}
+
+function getPin() {
+  var digits = document.querySelectorAll(".pin-digit");
+  var pin = "";
+  digits.forEach(function(d) { pin += d.value; });
+  return pin;
+}
+
+function checkPin() {
+  var pin = getPin();
+  var loginBtn = document.getElementById("loginBtn");
+  var pinUserName = document.getElementById("pinUserName");
+  var pinError = document.getElementById("pinError");
+
+  if (pin.length === 4) {
+    var user = USERS.find(function(u) { return u.pin === pin; });
+    if (user) {
+      pinUserName.textContent = user.name;
+      pinError.innerHTML = "&nbsp;";
+      loginBtn.disabled = false;
+    } else {
+      pinUserName.innerHTML = "&nbsp;";
+      pinError.textContent = "Neplatný PIN";
+      loginBtn.disabled = true;
+    }
+  } else {
+    pinUserName.innerHTML = "&nbsp;";
+    pinError.innerHTML = "&nbsp;";
+    loginBtn.disabled = true;
+  }
+}
+
+// ============================================================
+// LOGIN / LOGOUT
+// ============================================================
+function login() {
+  var pin = getPin();
+  var user = USERS.find(function(u) { return u.pin === pin; });
+  if (!user) {
+    showToast("Neplatný PIN");
+    return;
+  }
+
+  currentUser = user;
+  localStorage.setItem("uctenka-pin", pin);
+
+  if (typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }
+
+  showMainScreen();
+}
+
+function logout() {
+  currentUser = null;
+  photoBase64 = null;
+  localStorage.removeItem("uctenka-pin");
+
+  // Clear PIN inputs
+  document.querySelectorAll(".pin-digit").forEach(function(d) { d.value = ""; });
+  document.getElementById("pinUserName").innerHTML = "&nbsp;";
+  document.getElementById("pinError").innerHTML = "&nbsp;";
+  document.getElementById("loginBtn").disabled = true;
+
+  document.getElementById("logoutBtn").style.display = "none";
+  showScreen("loginScreen");
+
+  setTimeout(function() {
+    document.querySelector(".pin-digit").focus();
+  }, 300);
+}
+
+function showMainScreen() {
+  document.getElementById("userName").textContent = currentUser.name;
+  document.getElementById("userEmail").textContent = currentUser.email;
+  document.getElementById("userAvatar").textContent = getInitials(currentUser.name);
+  document.getElementById("logoutBtn").style.display = "block";
+  showScreen("mainScreen");
+}
+
+function getInitials(name) {
+  return name.split(" ").map(function(w) { return w[0]; }).join("").toUpperCase().slice(0, 2);
+}
+
+// ============================================================
+// SCREEN NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(function(s) {
+    s.classList.remove("active");
+  });
+  document.getElementById(id).classList.add("active");
+}
+
+// ============================================================
+// PHOTO HANDLING
+// ============================================================
+function handlePhoto(input) {
+  if (!input.files || !input.files[0]) return;
+
+  var file = input.files[0];
+  var reader = new FileReader();
+
+  reader.onload = function(e) {
+    // Compress image for email
+    compressImage(e.target.result, function(compressed) {
+      photoBase64 = compressed;
+
+      document.getElementById("photoPreview").src = compressed;
+      document.getElementById("photoPreview").style.display = "block";
+      document.getElementById("photoPlaceholder").style.display = "none";
+      document.getElementById("photoArea").classList.add("has-photo");
+    });
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function compressImage(dataUrl, callback) {
+  var img = new Image();
+  img.onload = function() {
+    var canvas = document.createElement("canvas");
+    var maxSize = 1200;
+    var w = img.width;
+    var h = img.height;
+
+    if (w > maxSize || h > maxSize) {
+      if (w > h) {
+        h = Math.round(h * maxSize / w);
+        w = maxSize;
+      } else {
+        w = Math.round(w * maxSize / h);
+        h = maxSize;
+      }
+    }
+
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL("image/jpeg", 0.75));
+  };
+  img.src = dataUrl;
+}
+
+function removePhoto(e) {
+  e.stopPropagation();
+  photoBase64 = null;
+  document.getElementById("photoPreview").style.display = "none";
+  document.getElementById("photoPreview").src = "";
+  document.getElementById("photoPlaceholder").style.display = "block";
+  document.getElementById("photoArea").classList.remove("has-photo");
+  document.getElementById("photoInput").value = "";
+}
+
+// ============================================================
+// SEND RECEIPT
+// ============================================================
+function sendReceipt() {
+  // Validate
+  if (!photoBase64) {
+    showToast("Vyfoťte účtenku");
+    return;
+  }
+
+  var orderId = document.getElementById("orderSelect").value;
+  if (!orderId) {
+    showToast("Vyberte zakázku");
+    return;
+  }
+
+  var order = ORDERS.find(function(o) { return o.id === orderId; });
+  var note = document.getElementById("noteInput").value.trim();
+
+  // Check EmailJS config
+  if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") {
+    showToast("Nastavte EmailJS konfiguraci v kódu");
+    return;
+  }
+
+  var sendBtn = document.getElementById("sendBtn");
+  sendBtn.classList.add("btn-sending");
+  sendBtn.disabled = true;
+
+  var noteText = note ? "\nPoznámka: " + note : "";
+
+  // EmailJS template parameters
+  var templateParams = {
+    to_email: BILLING_EMAIL + "," + currentUser.email,
+    from_name: currentUser.name,
+    subject: "Účtenka – " + order.id + " – " + order.name,
+    message: "Účtenka k zakázce " + order.id + " – " + order.name +
+             "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" +
+             noteText,
+    image: photoBase64,
+    order_id: order.id,
+    order_name: order.name,
+    reply_to: currentUser.email
+  };
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+    .then(function() {
+      sendBtn.classList.remove("btn-sending");
+      sendBtn.disabled = false;
+
+      document.getElementById("successMessage").textContent =
+        "E-mail byl odeslán na " + BILLING_EMAIL + " a na " + currentUser.email + ".";
+      showScreen("successScreen");
+    })
+    .catch(function(err) {
+      sendBtn.classList.remove("btn-sending");
+      sendBtn.disabled = false;
+      console.error("EmailJS error:", err);
+      showToast("Chyba při odesílání. Zkuste to znovu.");
+    });
+}
+
+// ============================================================
+// RESET FORM
+// ============================================================
+function resetForm() {
+  photoBase64 = null;
+  document.getElementById("photoPreview").style.display = "none";
+  document.getElementById("photoPreview").src = "";
+  document.getElementById("photoPlaceholder").style.display = "block";
+  document.getElementById("photoArea").classList.remove("has-photo");
+  document.getElementById("photoInput").value = "";
+  document.getElementById("orderSelect").value = "";
+  document.getElementById("noteInput").value = "";
+  showScreen("mainScreen");
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  var toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("visible");
+  setTimeout(function() {
+    toast.classList.remove("visible");
+  }, 3000);
+}
+</script>
+
+</body>
+</html>
