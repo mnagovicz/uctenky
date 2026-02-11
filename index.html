@@ -975,6 +975,7 @@ function sendReceipt() {
     reply_to: currentUser.email
   };
 
+  emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
     .then(function() {
       sendBtn.classList.remove("btn-sending");
