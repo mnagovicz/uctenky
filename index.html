@@ -988,7 +988,8 @@ function sendReceipt() {
       sendBtn.classList.remove("btn-sending");
       sendBtn.disabled = false;
       console.error("EmailJS error:", err);
-      showToast("Chyba při odesílání. Zkuste to znovu.");
+      var errMsg = (err && err.text) ? err.text : JSON.stringify(err);
+      showToast("Chyba: " + errMsg);
     });
 }
 
