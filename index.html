@@ -537,6 +537,37 @@ body {
   margin: 24px 0 12px;
 }
 
+/* Type toggle */
+.type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.type-btn.active {
+  border-color: var(--accent);
+  background: rgba(0,102,255,0.08);
+  color: var(--accent);
+}
+
+.type-btn:active {
+  transform: scale(0.97);
+}
+
 /* Responsive tweaks */
 @media (max-width: 360px) {
   .pin-digit {
@@ -606,9 +637,13 @@ body {
       <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(this)">
     </div>
 
-    <div class="section-title">Údaje</div>
+    <div class="section-title">Typ</div>
     <div class="card">
-      <div class="field">
+      <div class="type-toggle">
+        <button class="type-btn active" id="btnZakazka" onclick="setMode('zakazka')">Zakázka</button>
+        <button class="type-btn" id="btnRezie" onclick="setMode('rezie')">Režie</button>
+      </div>
+      <div class="field" id="orderField">
         <label class="field-label" for="orderSelect">Zakázka</label>
         <select class="field-select" id="orderSelect">
           <option value="">Vyberte zakázku...</option>
@@ -675,6 +710,7 @@ var BILLING_EMAIL = "fakturace@isprodukce.cz";
 // ============================================================
 var currentUser = null;
 var photoBase64 = null;
+var sendMode = "zakazka"; // "zakazka" nebo "rezie"
 
 // ============================================================
 // INICIALIZACE
@@ -941,6 +977,16 @@ function removePhoto(e) {
 // ============================================================
 // SEND RECEIPT
 // ============================================================
+function setMode(mode) {
+  sendMode = mode;
+  document.getElementById("btnZakazka").classList.toggle("active", mode === "zakazka");
+  document.getElementById("btnRezie").classList.toggle("active", mode === "rezie");
+  document.getElementById("orderField").style.display = mode === "rezie" ? "none" : "block";
+  if (mode === "rezie") {
+    document.getElementById("orderSelect").value = "";
+  }
+}
+
 function sendReceipt() {
   // Validate
   if (!photoBase64) {
@@ -949,12 +995,12 @@ function sendReceipt() {
   }
 
   var orderId = document.getElementById("orderSelect").value;
-  if (!orderId) {
+  if (sendMode === "zakazka" && !orderId) {
     showToast("Vyberte zakázku");
     return;
   }
 
-  var order = ORDERS.find(function(o) { return o.id === orderId; });
+  var order = orderId ? ORDERS.find(function(o) { return o.id === orderId; }) : null;
   var note = document.getElementById("noteInput").value.trim();
 
   // Check EmailJS config
@@ -968,18 +1014,22 @@ function sendReceipt() {
   sendBtn.disabled = true;
 
   var noteText = note ? "\nPoznámka: " + note : "";
+  var subjectText = order ? "Účtenka – " + order.id + " – " + order.name : "Účtenka – Režie";
+  var messageText = order
+    ? "Účtenka k zakázce " + order.id + " – " + order.name
+    : "Účtenka – Režie";
 
   // EmailJS template parameters
   var templateParams = {
     to_email: BILLING_EMAIL + "," + currentUser.email,
     from_name: currentUser.name,
-    subject: "Účtenka – " + order.id + " – " + order.name,
-    message: "Účtenka k zakázce " + order.id + " – " + order.name +
+    subject: subjectText,
+    message: messageText +
              "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" +
              noteText,
     image: photoBase64,
-    order_id: order.id,
-    order_name: order.name,
+    order_id: order ? order.id : "Režie",
+    order_name: order ? order.name : "Režie",
     reply_to: currentUser.email
   };
 
@@ -1014,6 +1064,7 @@ function resetForm() {
   document.getElementById("photoInput").value = "";
   document.getElementById("orderSelect").value = "";
   document.getElementById("noteInput").value = "";
+  setMode("zakazka");
   showScreen("mainScreen");
 }
 
