@@ -948,7 +948,7 @@ function compressImage(dataUrl, callback) {
   var img = new Image();
   img.onload = function() {
     var canvas = document.createElement("canvas");
-    var maxSize = 800;
+    var maxSize = 1600;
     var w = img.width;
     var h = img.height;
 
@@ -966,10 +966,10 @@ function compressImage(dataUrl, callback) {
     canvas.height = h;
     canvas.getContext("2d").drawImage(img, 0, 0, w, h);
 
-    // Sniž kvalitu aby byl soubor pod 30KB (kvůli EmailJS 50KB limitu na všechny proměnné)
-    var quality = 0.5;
+    // Komprimuj na max 500KB (EmailJS attachment limit)
+    var quality = 0.85;
     var result = canvas.toDataURL("image/jpeg", quality);
-    while (result.length > 30000 && quality > 0.1) {
+    while (result.length > 650000 && quality > 0.3) {
       quality -= 0.05;
       result = canvas.toDataURL("image/jpeg", quality);
     }
@@ -1033,7 +1033,12 @@ function sendReceipt() {
     ? "Účtenka k zakázce " + order.id + " – " + order.name
     : "Účtenka – Režie";
 
-  // EmailJS parametry - obrázek jako inline HTML
+  // Název souboru
+  var fileName = order 
+    ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
+    : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
+
+  // EmailJS parametry s přílohou
   var templateParams = {
     to_email: BILLING_EMAIL + "," + currentUser.email,
     from_name: currentUser.name,
@@ -1042,7 +1047,8 @@ function sendReceipt() {
     order_id: order ? order.id : "Režie",
     order_name: order ? order.name : "Režie",
     reply_to: currentUser.email,
-    image_data: photoBase64
+    content: photoBase64,
+    filename: fileName
   };
 
   // Použij emailjs.send()
