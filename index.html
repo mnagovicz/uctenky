@@ -1029,14 +1029,25 @@ function sendReceipt() {
     message: messageText +
              "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" +
              noteText,
-    image: photoBase64,
     order_id: order ? order.id : "Režie",
     order_name: order ? order.name : "Režie",
     reply_to: currentUser.email
   };
 
+  // Připrav název souboru přílohy
+  var fileName = order 
+    ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
+    : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
+
   emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, {
+    attachments: [
+      {
+        name: fileName,
+        data: photoBase64
+      }
+    ]
+  })
     .then(function() {
       sendBtn.classList.remove("btn-sending");
       sendBtn.disabled = false;
