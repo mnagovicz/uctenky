@@ -1021,6 +1021,11 @@ function sendReceipt() {
     ? "Účtenka k zakázce " + order.id + " – " + order.name
     : "Účtenka – Režie";
 
+  // Připrav název souboru
+  var fileName = order 
+    ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
+    : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
+
   // EmailJS template parameters
   var templateParams = {
     to_email: BILLING_EMAIL + "," + currentUser.email,
@@ -1032,7 +1037,10 @@ function sendReceipt() {
     order_id: order ? order.id : "Režie",
     order_name: order ? order.name : "Režie",
     reply_to: currentUser.email,
-    image: photoBase64
+    my_file: {
+      name: fileName,
+      data: photoBase64
+    }
   };
 
   emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
