@@ -1021,6 +1021,11 @@ function sendReceipt() {
     ? "Účtenka k zakázce " + order.id + " – " + order.name
     : "Účtenka – Režie";
 
+  // Připrav název souboru přílohy
+  var fileName = order 
+    ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
+    : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
+
   // EmailJS template parameters
   var templateParams = {
     to_email: BILLING_EMAIL + "," + currentUser.email,
@@ -1031,23 +1036,13 @@ function sendReceipt() {
              noteText,
     order_id: order ? order.id : "Režie",
     order_name: order ? order.name : "Režie",
-    reply_to: currentUser.email
+    reply_to: currentUser.email,
+    attachment: photoBase64,
+    attachment_name: fileName
   };
 
-  // Připrav název souboru přílohy
-  var fileName = order 
-    ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
-    : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
-
   emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, {
-    attachments: [
-      {
-        name: fileName,
-        data: photoBase64
-      }
-    ]
-  })
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
     .then(function() {
       sendBtn.classList.remove("btn-sending");
       sendBtn.disabled = false;
