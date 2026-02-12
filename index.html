@@ -948,7 +948,7 @@ function compressImage(dataUrl, callback) {
   var img = new Image();
   img.onload = function() {
     var canvas = document.createElement("canvas");
-    var maxSize = 1200;
+    var maxSize = 800;
     var w = img.width;
     var h = img.height;
 
@@ -966,10 +966,10 @@ function compressImage(dataUrl, callback) {
     canvas.height = h;
     canvas.getContext("2d").drawImage(img, 0, 0, w, h);
 
-    // Postupně snižuj kvalitu dokud nebude pod 500KB
-    var quality = 0.8;
+    // Sniž kvalitu aby byl soubor pod 30KB (kvůli EmailJS 50KB limitu na všechny proměnné)
+    var quality = 0.5;
     var result = canvas.toDataURL("image/jpeg", quality);
-    while (result.length > 500000 && quality > 0.2) {
+    while (result.length > 30000 && quality > 0.1) {
       quality -= 0.05;
       result = canvas.toDataURL("image/jpeg", quality);
     }
@@ -1033,39 +1033,20 @@ function sendReceipt() {
     ? "Účtenka k zakázce " + order.id + " – " + order.name
     : "Účtenka – Režie";
 
-  // Připrav název souboru
-  var fileName = order 
-    ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
-    : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
+  // EmailJS parametry - obrázek jako inline HTML
+  var templateParams = {
+    to_email: BILLING_EMAIL + "," + currentUser.email,
+    from_name: currentUser.name,
+    subject: subjectText,
+    message: messageText + "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" + noteText,
+    order_id: order ? order.id : "Režie",
+    order_name: order ? order.name : "Režie",
+    reply_to: currentUser.email,
+    image_data: photoBase64
+  };
 
-  // Převeď base64 na Blob a přiřaď k formuláři
-  var byteString = atob(photoBase64.split(',')[1]);
-  var mimeType = photoBase64.split(',')[0].split(':')[1].split(';')[0];
-  var ab = new ArrayBuffer(byteString.length);
-  var ia = new Uint8Array(ab);
-  for (var i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-  var blob = new Blob([ab], {type: mimeType});
-  var file = new File([blob], fileName, {type: mimeType});
-
-  // Naplně hidden formulář
-  var form = document.getElementById("emailForm");
-  form.querySelector('[name="to_email"]').value = BILLING_EMAIL + "," + currentUser.email;
-  form.querySelector('[name="from_name"]').value = currentUser.name;
-  form.querySelector('[name="subject"]').value = subjectText;
-  form.querySelector('[name="message"]').value = messageText + "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" + noteText;
-  form.querySelector('[name="order_id"]').value = order ? order.id : "Režie";
-  form.querySelector('[name="order_name"]').value = order ? order.name : "Režie";
-  form.querySelector('[name="reply_to"]').value = currentUser.email;
-
-  // Přidej soubor do file inputu pomocí DataTransfer
-  var dataTransfer = new DataTransfer();
-  dataTransfer.items.add(file);
-  document.getElementById("emailAttachment").files = dataTransfer.files;
-
-  // Použij emailjs.sendForm()
-  emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, form, EMAILJS_PUBLIC_KEY)
+  // Použij emailjs.send()
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
   .then(function() {
     sendBtn.classList.remove("btn-sending");
     sendBtn.disabled = false;
