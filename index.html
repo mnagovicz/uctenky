@@ -675,6 +675,18 @@ body {
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Hidden form for EmailJS -->
+<form id="emailForm" style="display:none;">
+  <input type="hidden" name="to_email">
+  <input type="hidden" name="from_name">
+  <input type="hidden" name="subject">
+  <input type="hidden" name="message">
+  <input type="hidden" name="order_id">
+  <input type="hidden" name="order_name">
+  <input type="hidden" name="reply_to">
+  <input type="file" name="my_file" id="emailAttachment">
+</form>
+
 <script>
 // ============================================================
 // KONFIGURACE – Upravte podle potřeby
@@ -1026,7 +1038,7 @@ function sendReceipt() {
     ? "uctenka_" + order.id + "_" + new Date().toISOString().slice(0,10) + ".jpg"
     : "uctenka_rezie_" + new Date().toISOString().slice(0,10) + ".jpg";
 
-  // Převeď base64 na Blob
+  // Převeď base64 na Blob a přiřaď k formuláři
   var byteString = atob(photoBase64.split(',')[1]);
   var mimeType = photoBase64.split(',')[0].split(':')[1].split(';')[0];
   var ab = new ArrayBuffer(byteString.length);
@@ -1037,28 +1049,23 @@ function sendReceipt() {
   var blob = new Blob([ab], {type: mimeType});
   var file = new File([blob], fileName, {type: mimeType});
 
-  // Použij FormData pro odeslání s přílohou (obchází 50KB limit)
-  var formData = new FormData();
-  formData.append("service_id", EMAILJS_SERVICE_ID);
-  formData.append("template_id", EMAILJS_TEMPLATE_ID);
-  formData.append("user_id", EMAILJS_PUBLIC_KEY);
-  formData.append("to_email", BILLING_EMAIL + "," + currentUser.email);
-  formData.append("from_name", currentUser.name);
-  formData.append("subject", subjectText);
-  formData.append("message", messageText + "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" + noteText);
-  formData.append("order_id", order ? order.id : "Režie");
-  formData.append("order_name", order ? order.name : "Režie");
-  formData.append("reply_to", currentUser.email);
-  formData.append("my_file", file, fileName);
+  // Naplně hidden formulář
+  var form = document.getElementById("emailForm");
+  form.querySelector('[name="to_email"]').value = BILLING_EMAIL + "," + currentUser.email;
+  form.querySelector('[name="from_name"]').value = currentUser.name;
+  form.querySelector('[name="subject"]').value = subjectText;
+  form.querySelector('[name="message"]').value = messageText + "\nOdesílatel: " + currentUser.name + " (" + currentUser.email + ")" + noteText;
+  form.querySelector('[name="order_id"]').value = order ? order.id : "Režie";
+  form.querySelector('[name="order_name"]').value = order ? order.name : "Režie";
+  form.querySelector('[name="reply_to"]').value = currentUser.email;
 
-  fetch("https://api.emailjs.com/api/v1.0/email/send-form", {
-    method: "POST",
-    body: formData
-  })
-  .then(function(response) {
-    if (response.ok) return response.text();
-    return response.text().then(function(text) { throw new Error(text); });
-  })
+  // Přidej soubor do file inputu pomocí DataTransfer
+  var dataTransfer = new DataTransfer();
+  dataTransfer.items.add(file);
+  document.getElementById("emailAttachment").files = dataTransfer.files;
+
+  // Použij emailjs.sendForm()
+  emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, form, EMAILJS_PUBLIC_KEY)
   .then(function() {
     sendBtn.classList.remove("btn-sending");
     sendBtn.disabled = false;
