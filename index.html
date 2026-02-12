@@ -954,10 +954,10 @@ function compressImage(dataUrl, callback) {
     canvas.height = h;
     canvas.getContext("2d").drawImage(img, 0, 0, w, h);
 
-    // Postupně snižuj kvalitu dokud nebude pod 100KB
-    var quality = 0.8;
+    // Postupně snižuj kvalitu dokud nebude pod 50KB (base64)
+    var quality = 0.7;
     var result = canvas.toDataURL("image/jpeg", quality);
-    while (result.length > 100000 && quality > 0.2) {
+    while (result.length > 50000 && quality > 0.1) {
       quality -= 0.05;
       result = canvas.toDataURL("image/jpeg", quality);
     }
@@ -1037,10 +1037,7 @@ function sendReceipt() {
     order_id: order ? order.id : "Režie",
     order_name: order ? order.name : "Režie",
     reply_to: currentUser.email,
-    my_file: {
-      name: fileName,
-      data: photoBase64
-    }
+    my_file: photoBase64
   };
 
   emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
